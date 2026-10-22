@@ -1,0 +1,26 @@
+{
+  "name": "mahjong-party",
+  "version": "1.0.0",
+  "description": "Online 4-player Hong Kong mahjong with bots and secure room chat",
+  "main": "server/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test test/",
+    "smoke": "node scripts/smoke.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.22.3",
+    "helmet": "^8.3.0",
+    "ws": "^8.22.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
+}
