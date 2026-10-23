@@ -11,7 +11,7 @@
     "test": "node --test test/",
     "smoke": "node scripts/smoke.js"
   },
-  "author": "",
+  "author": "Crow New Media",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

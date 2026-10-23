@@ -1,5 +1,9 @@
 # Mahjong Party 🀄
 
+<p><img src="public/img/crow-new-media-logo.png" alt="Crow New Media" width="240"></p>
+
+**Published by Crow New Media.** © 2026 Crow New Media.
+
 A simple, friendly **online 4-player Hong Kong mahjong** game with private rooms, AI bots for empty seats,
 and a secure room-only text chat. Node.js server (Express + `ws`) and a dependency-free single-page frontend.
 
