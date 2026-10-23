@@ -26,6 +26,18 @@ app.get('/healthz', (req, res) => res.json({ ok: true, rooms: rooms.rooms.size }
 app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '5m', index: 'index.html' }));
 
 const server = http.createServer(app);
+// Real client IP for per-IP limits. On Render every connection arrives from its proxy,
+// so use the leftmost forwarded address; locally, trust cf-connecting-ip only from cloudflared on loopback.
+function clientIp(req) {
+  const remote = req.socket.remoteAddress;
+  if (process.env.RENDER) {
+    const first = String(req.headers['true-client-ip'] || req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (first) return first.slice(0, 64);
+  }
+  if ((remote === '127.0.0.1' || remote === '::1') && req.headers['cf-connecting-ip']) return String(req.headers['cf-connecting-ip']).slice(0, 64);
+  return remote;
+}
+const MAX_SOCKETS = 2000; // global cap across all IPs
 const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
 
 // per-IP room creation limit (10 per minute) and connection cap
@@ -40,8 +52,8 @@ server.on('upgrade', (req, socket, head) => {
   const origin = req.headers.origin;
   try { if (origin && new URL(origin).host !== req.headers.host) throw new Error('origin'); } catch { socket.destroy(); return; }
   if (new URL(req.url, 'http://x').pathname !== '/ws') { socket.destroy(); return; }
-  const ip = (req.socket.remoteAddress === '127.0.0.1' || req.socket.remoteAddress === '::1') && req.headers['cf-connecting-ip'] ? String(req.headers['cf-connecting-ip']) : req.socket.remoteAddress;
-  if ((conns.get(ip) || 0) >= 20) { socket.destroy(); return; }
+  const ip = clientIp(req);
+  if ((conns.get(ip) || 0) >= 20 || wss.clients.size >= MAX_SOCKETS) { socket.destroy(); return; }
   wss.handleUpgrade(req, socket, head, (ws) => {
     conns.set(ip, (conns.get(ip) || 0) + 1);
     ws.on('close', () => { const n = (conns.get(ip) || 1) - 1; if (n) conns.set(ip, n); else conns.delete(ip); });
